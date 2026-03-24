@@ -720,16 +720,18 @@
       </div>
       <hr class="divider">
       <p class="section-note">Tax and social security rates to calculate take-home pay.</p>
-      <div class="field">
-        <label>Tax rate mode</label>
-        <div class="toggle-group" id="taxMode">
-          <button class="active" data-value="same">Same rate</button>
-          <button data-value="separate">Separate rates</button>
+      <div id="taxModeToggleRow">
+        <div class="field">
+          <label>Tax rate mode</label>
+          <div class="toggle-group" id="taxMode">
+            <button class="active" data-value="same">Same rate</button>
+            <button data-value="separate">Separate rates</button>
+          </div>
         </div>
       </div>
       <div id="taxSameRow">
         <div class="field">
-          <label>Effective tax rate (both)</label>
+          <label id="taxSameLabel">Effective tax rate</label>
           <div class="input-suffix" data-suffix="%"><input type="text" id="taxRate" value="0"></div>
         </div>
       </div>
@@ -965,9 +967,16 @@
     document.getElementById('person2Results').style.display = isJoint ? 'flex' : 'none';
     document.getElementById('perPersonStat').style.display = isJoint ? '' : 'none';
     document.getElementById('avgBonus2Row').style.display = isJoint ? '' : 'none';
-    // Update tax labels
-    const taxSameLabel = document.querySelector('#taxSameRow label');
-    if (taxSameLabel) taxSameLabel.textContent = isJoint ? 'Effective tax rate (both)' : 'Effective tax rate';
+    // In solo mode, hide the tax mode toggle and force "same" rate
+    document.getElementById('taxModeToggleRow').style.display = isJoint ? '' : 'none';
+    if (!isJoint) {
+      // Reset to "same" mode
+      document.getElementById('taxMode').querySelectorAll('button').forEach(b => {
+        b.classList.toggle('active', b.dataset.value === 'same');
+      });
+      updateTaxModeUI();
+    }
+    document.getElementById('taxSameLabel').textContent = isJoint ? 'Effective tax rate (both)' : 'Effective tax rate';
   }
 
   document.getElementById('applicantMode').addEventListener('click', () => {
