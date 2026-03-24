@@ -657,6 +657,14 @@
       <p class="section-note">Banks typically average bonuses over 3 years and discount by 20–40% as a safety buffer.</p>
 
       <div class="field">
+        <label>Applicants</label>
+        <div class="toggle-group" id="applicantMode">
+          <button class="active" data-value="solo">Solo</button>
+          <button data-value="joint">Joint</button>
+        </div>
+      </div>
+
+      <div class="field">
         <label>Name</label>
         <input type="text" id="name1" value="Person 1" style="width:100%;padding:0.6rem 0.75rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;font-family:inherit;">
       </div>
@@ -677,6 +685,7 @@
         </div>
       </div>
 
+      <div id="person2Section" style="display:none;">
       <hr class="divider">
 
       <div class="field">
@@ -698,6 +707,7 @@
         <div class="field">
           <div class="input-prefix"><input type="text" id="bonus2y3" value="0" inputmode="numeric"></div>
         </div>
+      </div>
       </div>
       <hr class="divider">
       <div class="slider-field">
@@ -756,7 +766,7 @@
           <div class="value" id="monthlyPayment">—</div>
           <div class="sub" id="monthlyPaymentNote"></div>
         </div>
-        <div class="stat">
+        <div class="stat" id="perPersonStat" style="display:none;">
           <div class="label">Per person (50/50)</div>
           <div class="value" id="monthlyPerPerson">—</div>
           <div class="sub">Each per month</div>
@@ -777,7 +787,7 @@
             <div class="sub" id="repaymentBonusNote1"></div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div id="person2Results" style="display:none;flex-direction:column;gap:0.75rem;">
           <div class="stat" id="netIncomeStat2">
             <div class="label" id="repayLabel2">Person 2 — % of net</div>
             <div class="value" id="repaymentPct2">—</div>
@@ -829,9 +839,9 @@
         </div>
       </div>
       <table class="breakdown">
-        <tr><td>Combined salaries</td><td id="combinedSalaries">—</td></tr>
-        <tr><td>Avg bonus (Person 1)</td><td id="avgBonus1">—</td></tr>
-        <tr><td>Avg bonus (Person 2)</td><td id="avgBonus2">—</td></tr>
+        <tr><td id="combinedSalariesLabel">Salary</td><td id="combinedSalaries">—</td></tr>
+        <tr><td id="avgBonus1Label">Avg bonus</td><td id="avgBonus1">—</td></tr>
+        <tr id="avgBonus2Row"><td>Avg bonus (Person 2)</td><td id="avgBonus2">—</td></tr>
         <tr><td>Bonus after haircut</td><td id="bonusAfterHaircut">—</td></tr>
         <tr class="total"><td>Income for lending</td><td id="lendingIncome">—</td></tr>
       </table>
@@ -947,6 +957,24 @@
     calculate();
   });
 
+  // ---- Applicant mode toggle ----
+  function updateApplicantModeUI() {
+    const mode = getToggleValue('applicantMode');
+    const isJoint = mode === 'joint';
+    document.getElementById('person2Section').style.display = isJoint ? '' : 'none';
+    document.getElementById('person2Results').style.display = isJoint ? 'flex' : 'none';
+    document.getElementById('perPersonStat').style.display = isJoint ? '' : 'none';
+    document.getElementById('avgBonus2Row').style.display = isJoint ? '' : 'none';
+    // Update tax labels
+    const taxSameLabel = document.querySelector('#taxSameRow label');
+    if (taxSameLabel) taxSameLabel.textContent = isJoint ? 'Effective tax rate (both)' : 'Effective tax rate';
+  }
+
+  document.getElementById('applicantMode').addEventListener('click', () => {
+    updateApplicantModeUI();
+    calculate();
+  });
+
   ['taxRate','taxRate1','taxRate2'].forEach(id => {
     document.getElementById(id).addEventListener('input', calculate);
   });
@@ -1045,14 +1073,15 @@
     document.getElementById('totalInterest').textContent = formatMoney(totalInterest);
 
     // Net income & per-person repayment %
+    const isJoint = getToggleValue('applicantMode') === 'joint';
     const salary1 = parseMoney(document.getElementById('salary1').value);
-    const salary2 = parseMoney(document.getElementById('salary2').value);
+    const salary2 = isJoint ? parseMoney(document.getElementById('salary2').value) : 0;
     const name1 = document.getElementById('name1').value || 'Person 1';
     const name2 = document.getElementById('name2').value || 'Person 2';
     document.getElementById('taxLabel1').textContent = name1 + ' — effective tax rate';
     document.getElementById('taxLabel2').textContent = name2 + ' — effective tax rate';
     const taxMode = getToggleValue('taxMode');
-    const halfPayment = payment / 2;
+    const personShare = isJoint ? payment / 2 : payment;
     const SS_RATE = 0.06, SS_CAP = 6062;
     const ss1Mo = Math.min(salary1 / 12, SS_CAP) * SS_RATE;
     const ss2Mo = Math.min(salary2 / 12, SS_CAP) * SS_RATE;
@@ -1071,9 +1100,9 @@
     const b1 = [parseMoney(document.getElementById('bonus1y1').value),
                 parseMoney(document.getElementById('bonus1y2').value),
                 parseMoney(document.getElementById('bonus1y3').value)];
-    const b2 = [parseMoney(document.getElementById('bonus2y1').value),
+    const b2 = isJoint ? [parseMoney(document.getElementById('bonus2y1').value),
                 parseMoney(document.getElementById('bonus2y2').value),
-                parseMoney(document.getElementById('bonus2y3').value)];
+                parseMoney(document.getElementById('bonus2y3').value)] : [0, 0, 0];
 
     const avgBonus1 = (b1[0] + b1[1] + b1[2]) / 3;
     const avgBonus2 = (b2[0] + b2[1] + b2[2]) / 3;
@@ -1091,12 +1120,15 @@
       else if (pct <= 40) el.classList.add('warn');
       else el.classList.add('fail');
     }
-    applyRepayPctStat('netIncomeStat1', 'repayLabel1', 'repaymentPct1', 'repaymentPctNote1', name1 + ' — % of net (salary)', halfPayment, net1Monthly);
-    applyRepayPctStat('netIncomeStat2', 'repayLabel2', 'repaymentPct2', 'repaymentPctNote2', name2 + ' — % of net (salary)', halfPayment, net2Monthly);
+    const repayLabel1 = isJoint ? name1 + ' — % of net (salary)' : '% of net (salary)';
+    applyRepayPctStat('netIncomeStat1', 'repayLabel1', 'repaymentPct1', 'repaymentPctNote1', repayLabel1, personShare, net1Monthly);
+    if (isJoint) {
+      applyRepayPctStat('netIncomeStat2', 'repayLabel2', 'repaymentPct2', 'repaymentPctNote2', name2 + ' — % of net (salary)', personShare, net2Monthly);
+    }
 
     // Bonus-inclusive net income stats (only shown if person has bonuses)
     const hasBonus1 = b1.some(v => v > 0);
-    const hasBonus2 = b2.some(v => v > 0);
+    const hasBonus2 = isJoint && b2.some(v => v > 0);
     const discBonus1Mo = (avgBonus1 * (1 - haircutPct)) / 12;
     const discBonus2Mo = (avgBonus2 * (1 - haircutPct)) / 12;
 
@@ -1104,7 +1136,6 @@
     const bonusStat2 = document.getElementById('netBonusStat2');
 
     if (hasBonus1) {
-      // Apply tax + SS to the discounted bonus portion
       let bonusNet1Mo;
       if (taxMode === 'separate') {
         const tr1 = (parseFloat(document.getElementById('taxRate1').value) || 0) / 100;
@@ -1115,7 +1146,8 @@
       }
       const netIncBonus1 = net1Monthly + bonusNet1Mo;
       bonusStat1.style.display = '';
-      applyRepayPctStat('netBonusStat1', 'repayBonusLabel1', 'repaymentBonusPct1', 'repaymentBonusNote1', name1 + ' — inc. bonus', halfPayment, netIncBonus1);
+      const bonusLabel1 = isJoint ? name1 + ' — inc. bonus' : 'inc. bonus';
+      applyRepayPctStat('netBonusStat1', 'repayBonusLabel1', 'repaymentBonusPct1', 'repaymentBonusNote1', bonusLabel1, personShare, netIncBonus1);
     } else {
       bonusStat1.style.display = 'none';
     }
@@ -1131,7 +1163,7 @@
       }
       const netIncBonus2 = net2Monthly + bonusNet2Mo;
       bonusStat2.style.display = '';
-      applyRepayPctStat('netBonusStat2', 'repayBonusLabel2', 'repaymentBonusPct2', 'repaymentBonusNote2', name2 + ' — inc. bonus', halfPayment, netIncBonus2);
+      applyRepayPctStat('netBonusStat2', 'repayBonusLabel2', 'repaymentBonusPct2', 'repaymentBonusNote2', name2 + ' — inc. bonus', personShare, netIncBonus2);
     } else {
       bonusStat2.style.display = 'none';
     }
@@ -1143,7 +1175,9 @@
     const adjustedIncome = combinedSalary + bonusAfterHaircut;
     const maxBorrowing = adjustedIncome * multiple;
 
+    document.getElementById('combinedSalariesLabel').textContent = isJoint ? 'Combined salaries' : 'Salary';
     document.getElementById('combinedSalaries').textContent = formatMoney(combinedSalary);
+    document.getElementById('avgBonus1Label').textContent = isJoint ? 'Avg bonus (' + name1 + ')' : 'Avg bonus';
     document.getElementById('avgBonus1').textContent = formatMoney(avgBonus1);
     document.getElementById('avgBonus2').textContent = formatMoney(avgBonus2);
     document.getElementById('bonusAfterHaircut').textContent = formatMoney(bonusAfterHaircut);
@@ -1184,7 +1218,7 @@
     'salary1','salary2','bonus1y1','bonus1y2','bonus1y3','bonus2y1','bonus2y2','bonus2y3',
     'taxRate','taxRate1','taxRate2','name1','name2'];
   const sliderIds = ['term','haircut','multiple'];
-  const toggleIds = ['mortgageType','taxMode'];
+  const toggleIds = ['mortgageType','taxMode','applicantMode'];
 
   // Short param keys for compact share URLs
   const paramMap = {
@@ -1194,7 +1228,7 @@
     bonus2y1:'b2a', bonus2y2:'b2b', bonus2y3:'b2c',
     taxRate:'tr', taxRate1:'t1', taxRate2:'t2', name1:'n1', name2:'n2',
     term:'te', haircut:'hc', multiple:'mu',
-    mortgageType:'mt', taxMode:'tx'
+    mortgageType:'mt', taxMode:'tx', applicantMode:'am'
   };
   const reverseParamMap = Object.fromEntries(Object.entries(paramMap).map(([k,v]) => [v,k]));
 
@@ -1236,6 +1270,7 @@
     document.getElementById('multipleDisplay').textContent = parseFloat(document.getElementById('multiple').value).toFixed(2) + 'x';
     updateMortgageTypeUI();
     updateTaxModeUI();
+    updateApplicantModeUI();
     calculate();
   }
 
@@ -1361,9 +1396,10 @@
       rateLabel = `Tracker ${rate.toFixed(2)}% (base ${base}% + ${margin}%)`;
     }
 
-    const salary1 = p('salary1'), salary2 = p('salary2');
+    const isJoint = (state.applicantMode || 'solo') === 'joint';
+    const salary1 = p('salary1'), salary2 = isJoint ? p('salary2') : 0;
     const b1 = [p('bonus1y1'), p('bonus1y2'), p('bonus1y3')];
-    const b2 = [p('bonus2y1'), p('bonus2y2'), p('bonus2y3')];
+    const b2 = isJoint ? [p('bonus2y1'), p('bonus2y2'), p('bonus2y3')] : [0, 0, 0];
     const avgB1 = (b1[0]+b1[1]+b1[2])/3, avgB2 = (b2[0]+b2[1]+b2[2])/3;
     const haircut = (parseInt(state.haircut) || 30) / 100;
     const multiple = parseFloat(state.multiple) || 4.5;
@@ -1387,9 +1423,9 @@
       net1Monthly = (salary1 * (1 - tr)) / 12 - ss1Mo;
       net2Monthly = (salary2 * (1 - tr)) / 12 - ss2Mo;
     }
-    const halfPmt = payment / 2;
-    const repayPct1 = net1Monthly > 0 ? (halfPmt / net1Monthly) * 100 : 0;
-    const repayPct2 = net2Monthly > 0 ? (halfPmt / net2Monthly) * 100 : 0;
+    const personPmt = isJoint ? payment / 2 : payment;
+    const repayPct1 = net1Monthly > 0 ? (personPmt / net1Monthly) * 100 : 0;
+    const repayPct2 = net2Monthly > 0 ? (personPmt / net2Monthly) * 100 : 0;
     const name1 = state.name1 || 'Person 1';
     const name2 = state.name2 || 'Person 2';
 
@@ -1409,15 +1445,15 @@
       netIncBonus1 = net1Monthly + discB1Mo * (1 - tr);
       netIncBonus2 = net2Monthly + discB2Mo * (1 - tr);
     }
-    const repayBonusPct1 = netIncBonus1 > 0 ? (halfPmt / netIncBonus1) * 100 : 0;
-    const repayBonusPct2 = netIncBonus2 > 0 ? (halfPmt / netIncBonus2) * 100 : 0;
+    const repayBonusPct1 = netIncBonus1 > 0 ? (personPmt / netIncBonus1) * 100 : 0;
+    const repayBonusPct2 = netIncBonus2 > 0 ? (personPmt / netIncBonus2) * 100 : 0;
 
     return { propertyPrice, cashDeposit, salePrice, outstanding, netEquity, totalDep, mortgage, ltv, term,
       rateLabel, payment, totalRepaid, totalInterest,
       salary1, salary2, avgB1, avgB2, haircut: haircut*100, multiple, bonusAfter, adjustedIncome, maxBorrowing,
       affordable: mortgage <= maxBorrowing ? 'Yes' : 'No',
       name1, name2, net1Monthly, net2Monthly, repayPct1, repayPct2,
-      hasBonus1, hasBonus2, netIncBonus1, netIncBonus2, repayBonusPct1, repayBonusPct2 };
+      hasBonus1, hasBonus2, netIncBonus1, netIncBonus2, repayBonusPct1, repayBonusPct2, isJoint };
   }
 
   document.getElementById('exportCsvBtn').addEventListener('click', () => {
@@ -1545,25 +1581,25 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
           <div class="label">Total monthly</div>
           <div class="val">${m(r.payment)}</div>
         </div>
-        <div class="stat-box">
+        ${r.isJoint ? `<div class="stat-box">
           <div class="label">Per person (50/50)</div>
           <div class="val">${m(r.payment / 2)}</div>
-        </div>
+        </div>` : ''}
       </div>
       <div class="stat-row">
         <div style="display:flex;flex-direction:column;gap:6px;">
           <div class="stat-box">
-            <div class="label">${r.name1} — salary only</div>
+            <div class="label">${r.isJoint ? r.name1 + ' — salary only' : '% of net (salary)'}</div>
             <div class="val" style="color:${pct1Color}">${r.repayPct1.toFixed(1)}%</div>
-            <div class="sub">${m(r.payment / 2)} of ${m(r.net1Monthly)}/mo</div>
+            <div class="sub">${m(r.isJoint ? r.payment / 2 : r.payment)} of ${m(r.net1Monthly)}/mo</div>
           </div>
           ${r.hasBonus1 ? `<div class="stat-box">
-            <div class="label">${r.name1} — inc. bonus</div>
+            <div class="label">${r.isJoint ? r.name1 + ' — inc. bonus' : 'inc. bonus'}</div>
             <div class="val" style="color:${bPct1Color}">${r.repayBonusPct1.toFixed(1)}%</div>
-            <div class="sub">${m(r.payment / 2)} of ${m(r.netIncBonus1)}/mo</div>
+            <div class="sub">${m(r.isJoint ? r.payment / 2 : r.payment)} of ${m(r.netIncBonus1)}/mo</div>
           </div>` : ''}
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
+        ${r.isJoint ? `<div style="display:flex;flex-direction:column;gap:6px;">
           <div class="stat-box">
             <div class="label">${r.name2} — salary only</div>
             <div class="val" style="color:${pct2Color}">${r.repayPct2.toFixed(1)}%</div>
@@ -1574,7 +1610,7 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
             <div class="val" style="color:${bPct2Color}">${r.repayBonusPct2.toFixed(1)}%</div>
             <div class="sub">${m(r.payment / 2)} of ${m(r.netIncBonus2)}/mo</div>
           </div>` : ''}
-        </div>
+        </div>` : ''}
       </div>
     </div>
 
@@ -1620,9 +1656,9 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
         </div>
       </div>
       <table>
-        <tr><td>Combined salaries</td><td>${m(r.salary1 + r.salary2)}</td></tr>
-        <tr><td>Avg bonus (${r.name1})</td><td>${m(r.avgB1)}</td></tr>
-        <tr><td>Avg bonus (${r.name2})</td><td>${m(r.avgB2)}</td></tr>
+        <tr><td>${r.isJoint ? 'Combined salaries' : 'Salary'}</td><td>${m(r.salary1 + r.salary2)}</td></tr>
+        <tr><td>Avg bonus${r.isJoint ? ' (' + r.name1 + ')' : ''}</td><td>${m(r.avgB1)}</td></tr>
+        ${r.isJoint ? `<tr><td>Avg bonus (${r.name2})</td><td>${m(r.avgB2)}</td></tr>` : ''}
         <tr><td>Bonus after ${r.haircut}% haircut</td><td>${m(r.bonusAfter)}</td></tr>
         <tr class="total"><td>Income for lending</td><td>${m(r.adjustedIncome)}</td></tr>
       </table>
@@ -1631,10 +1667,10 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
     <div class="section">
       <div class="section-title">Income Details</div>
       <table>
-        <tr><td>${r.name1} — salary</td><td>${m(r.salary1)}</td></tr>
-        <tr><td>${r.name1} — net monthly</td><td>${m(r.net1Monthly)}</td></tr>
-        <tr><td>${r.name2} — salary</td><td>${m(r.salary2)}</td></tr>
-        <tr><td>${r.name2} — net monthly</td><td>${m(r.net2Monthly)}</td></tr>
+        <tr><td>${r.isJoint ? r.name1 + ' — salary' : 'Salary'}</td><td>${m(r.salary1)}</td></tr>
+        <tr><td>${r.isJoint ? r.name1 + ' — net monthly' : 'Net monthly'}</td><td>${m(r.net1Monthly)}</td></tr>
+        ${r.isJoint ? `<tr><td>${r.name2} — salary</td><td>${m(r.salary2)}</td></tr>
+        <tr><td>${r.name2} — net monthly</td><td>${m(r.net2Monthly)}</td></tr>` : ''}
       </table>
     </div>
 
@@ -1712,6 +1748,7 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
   renderScenarios();
   updateMortgageTypeUI();
   updateTaxModeUI();
+  updateApplicantModeUI();
   loadFromHash();
   calculate();
 </script>
