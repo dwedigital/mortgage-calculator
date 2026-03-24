@@ -543,6 +543,7 @@
     <button class="scenario-save-btn" id="updateScenarioBtn" style="display:none;background:var(--amber-dim);border-color:rgba(251,191,36,0.3);color:var(--amber);">Update scenario</button>
     <button class="scenario-save-btn" id="exportCsvBtn" style="background:var(--green-dim);border-color:rgba(52,211,153,0.3);color:var(--green);">Export CSV</button>
     <button class="scenario-save-btn" id="exportPdfBtn" style="background:var(--accent-dim);border-color:rgba(108,124,255,0.3);color:var(--accent);">Export PDF</button>
+    <button class="scenario-save-btn" id="shareLinkBtn" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.3);color:#a855f7;">Share link</button>
   </div>
 </div>
 
@@ -1609,10 +1610,43 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
     setTimeout(() => { w.print(); }, 300);
   });
 
+  // ---- Share link ----
+  document.getElementById('shareLinkBtn').addEventListener('click', () => {
+    const state = captureState();
+    const json = JSON.stringify(state);
+    const encoded = btoa(unescape(encodeURIComponent(json)));
+    const url = window.location.origin + window.location.pathname + '#s=' + encoded;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('shareLinkBtn');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    }).catch(() => {
+      prompt('Copy this link:', url);
+    });
+  });
+
+  // ---- Load from shared link ----
+  function loadFromHash() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#s=')) {
+      try {
+        const json = decodeURIComponent(escape(atob(hash.slice(3))));
+        const state = JSON.parse(json);
+        loadState(state);
+        // Clear hash so it doesn't reload on refresh
+        history.replaceState(null, '', window.location.pathname);
+      } catch (e) {
+        console.warn('Invalid shared link data');
+      }
+    }
+  }
+
   // ---- Init ----
   renderScenarios();
   updateMortgageTypeUI();
   updateTaxModeUI();
+  loadFromHash();
   calculate();
 </script>
 
