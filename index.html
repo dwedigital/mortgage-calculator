@@ -1156,6 +1156,18 @@
   const sliderIds = ['term','haircut','multiple'];
   const toggleIds = ['mortgageType','taxMode'];
 
+  // Short param keys for compact share URLs
+  const paramMap = {
+    propertyPrice:'pp', cashDeposit:'cd', salePrice:'sp', purchasePrice:'op', outstandingMortgage:'om',
+    fixedRate:'fr', baseRate:'br', trackerMargin:'tm',
+    salary1:'s1', salary2:'s2', bonus1y1:'b1a', bonus1y2:'b1b', bonus1y3:'b1c',
+    bonus2y1:'b2a', bonus2y2:'b2b', bonus2y3:'b2c',
+    taxRate:'tr', taxRate1:'t1', taxRate2:'t2', name1:'n1', name2:'n2',
+    term:'te', haircut:'hc', multiple:'mu',
+    mortgageType:'mt', taxMode:'tx'
+  };
+  const reverseParamMap = Object.fromEntries(Object.entries(paramMap).map(([k,v]) => [v,k]));
+
   function getScenarios() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
     catch { return {}; }
@@ -1613,9 +1625,14 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
   // ---- Share link ----
   document.getElementById('shareLinkBtn').addEventListener('click', () => {
     const state = captureState();
-    const json = JSON.stringify(state);
-    const encoded = btoa(unescape(encodeURIComponent(json)));
-    const url = window.location.origin + window.location.pathname + '#s=' + encoded;
+    const params = new URLSearchParams();
+    for (const [id, val] of Object.entries(state)) {
+      if (val !== '' && val !== '0' && val !== 0) {
+        const key = paramMap[id] || id;
+        params.set(key, String(val).replace(/,/g, ''));
+      }
+    }
+    const url = window.location.origin + window.location.pathname + '?' + params.toString();
     navigator.clipboard.writeText(url).then(() => {
       const btn = document.getElementById('shareLinkBtn');
       const orig = btn.textContent;
@@ -1628,13 +1645,25 @@ ${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + 
 
   // ---- Load from shared link ----
   function loadFromHash() {
+    // New format: compact query params
+    const params = new URLSearchParams(window.location.search);
+    if (params.toString()) {
+      const state = {};
+      for (const [key, val] of params.entries()) {
+        const id = reverseParamMap[key] || key;
+        state[id] = val;
+      }
+      loadState(state);
+      history.replaceState(null, '', window.location.pathname);
+      return;
+    }
+    // Legacy format: base64 hash
     const hash = window.location.hash;
     if (hash.startsWith('#s=')) {
       try {
         const json = decodeURIComponent(escape(atob(hash.slice(3))));
         const state = JSON.parse(json);
         loadState(state);
-        // Clear hash so it doesn't reload on refresh
         history.replaceState(null, '', window.location.pathname);
       } catch (e) {
         console.warn('Invalid shared link data');
