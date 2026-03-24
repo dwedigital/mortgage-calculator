@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Calculator</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-2: #232733;
+      --border: #2e3345;
+      --text: #e4e6ef;
+      --text-muted: #8b8fa3;
+      --accent: #6c7cff;
+      --accent-dim: rgba(108,124,255,0.12);
+      --green: #34d399;
+      --green-dim: rgba(52,211,153,0.12);
+      --red: #f87171;
+      --red-dim: rgba(248,113,113,0.12);
+      --amber: #fbbf24;
+      --amber-dim: rgba(251,191,36,0.12);
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 2rem 2rem 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 2rem 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 860px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      font-weight: 600;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      font-weight: 500;
+    }
+
+    .field input, .field select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .field input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .input-prefix {
+      position: relative;
+    }
+
+    .input-prefix::before {
+      content: "£";
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      pointer-events: none;
+    }
+
+    .input-prefix input {
+      padding-left: 1.5rem;
+    }
+
+    .input-suffix {
+      position: relative;
+    }
+
+    .input-suffix::after {
+      content: attr(data-suffix);
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+
+    .input-suffix input {
+      padding-right: 3rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.25rem 0;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .toggle-group button {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .toggle-group button.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .toggle-group button:hover:not(.active) {
+      background: var(--border);
+    }
+
+    /* Results */
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat {
+      background: var(--surface-2);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .stat .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .stat .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .stat .sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .stat.mortgage-hero {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(108,124,255,0.18), rgba(108,124,255,0.06));
+      border: 1px solid rgba(108,124,255,0.35);
+      padding: 1.25rem;
+    }
+
+    .stat.mortgage-hero .value {
+      color: #fff;
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .stat.mortgage-hero .label {
+      font-size: 0.8rem;
+    }
+
+    .stat.highlight {
+      grid-column: 1 / -1;
+      background: var(--accent-dim);
+      border: 1px solid rgba(108,124,255,0.25);
+    }
+
+    .stat.highlight .value {
+      color: var(--accent);
+      font-size: 2rem;
+    }
+
+    .stat.pass { background: var(--green-dim); border: 1px solid rgba(52,211,153,0.25); }
+    .stat.pass .value { color: var(--green); }
+
+    .stat.fail { background: var(--red-dim); border: 1px solid rgba(248,113,113,0.25); }
+    .stat.fail .value { color: var(--red); }
+
+    .stat.warn { background: var(--amber-dim); border: 1px solid rgba(251,191,36,0.25); }
+    .stat.warn .value { color: var(--amber); }
+
+    /* Breakdown table */
+    .breakdown {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .breakdown tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breakdown tr:last-child { border-bottom: none; }
+
+    .breakdown td {
+      padding: 0.6rem 0;
+    }
+
+    .breakdown td:first-child {
+      color: var(--text-muted);
+    }
+
+    .breakdown td:last-child {
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .breakdown tr.total td {
+      padding-top: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+      border-top: 2px solid var(--border);
+    }
+
+    /* Affordability bar */
+    .afford-bar-container {
+      margin: 1rem 0;
+    }
+
+    .afford-bar-bg {
+      height: 8px;
+      background: var(--surface-2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .afford-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .afford-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    .slider-field {
+      margin-bottom: 1rem;
+    }
+
+    .slider-field label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .slider-field label span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .section-note {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    /* Scenarios bar */
+    .scenarios-bar {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem 0.5rem;
+    }
+
+    .scenarios-inner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .scenarios-inner label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    .scenario-pills {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .scenario-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.7rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .scenario-pill:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .scenario-pill.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .scenario-pill .pill-delete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+      border: none;
+      background: none;
+      padding: 0;
+      font-family: inherit;
+    }
+
+    .scenario-pill .pill-delete:hover {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .scenario-save-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: var(--accent-dim);
+      border: 1px solid rgba(108,124,255,0.3);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .scenario-save-btn:hover {
+      background: rgba(108,124,255,0.2);
+      border-color: var(--accent);
+    }
+
+    .scenario-empty {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .scenario-pill .pill-desc {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      z-index: 10;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .scenario-pill {
+      position: relative;
+    }
+
+    .scenario-pill:hover .pill-desc {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mortgage Calculator</h1>
+  <p>Property, deposit, affordability & repayment modelling</p>
+</header>
+
+<div class="scenarios-bar">
+  <div class="scenarios-inner">
+    <label>Scenarios</label>
+    <div class="scenario-pills" id="scenarioPills">
+      <span class="scenario-empty" id="scenarioEmpty">No saved scenarios</span>
+    </div>
+    <button class="scenario-save-btn" id="saveScenarioBtn">+ Save current</button>
+    <button class="scenario-save-btn" id="updateScenarioBtn" style="display:none;background:var(--amber-dim);border-color:rgba(251,191,36,0.3);color:var(--amber);">Update scenario</button>
+    <button class="scenario-save-btn" id="exportCsvBtn" style="background:var(--green-dim);border-color:rgba(52,211,153,0.3);color:var(--green);">Export CSV</button>
+    <button class="scenario-save-btn" id="exportPdfBtn" style="background:var(--accent-dim);border-color:rgba(108,124,255,0.3);color:var(--accent);">Export PDF</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- LEFT COLUMN: Inputs -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+    <!-- Property -->
+    <div class="card">
+      <h2>Property</h2>
+      <div class="field">
+        <label>New property price</label>
+        <div class="input-prefix"><input type="text" id="propertyPrice" value="2,000,000" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <!-- Deposit & Equity -->
+    <div class="card">
+      <h2>Deposit & Equity</h2>
+      <div class="field">
+        <label>Cash deposit</label>
+        <div class="input-prefix"><input type="text" id="cashDeposit" value="500,000" inputmode="numeric"></div>
+      </div>
+      <hr class="divider">
+      <p class="section-note">If selling a current property, enter details below to calculate equity.</p>
+      <div class="row">
+        <div class="field">
+          <label>Current home sale price</label>
+          <div class="input-prefix"><input type="text" id="salePrice" value="1,175,000" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <label>Original purchase price</label>
+          <div class="input-prefix"><input type="text" id="purchasePrice" value="1,165,000" inputmode="numeric"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Outstanding mortgage on current home</label>
+        <div class="input-prefix"><input type="text" id="outstandingMortgage" value="632,591" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <!-- Mortgage Terms -->
+    <div class="card">
+      <h2>Mortgage Terms</h2>
+      <div class="field">
+        <label>Mortgage type</label>
+        <div class="toggle-group" id="mortgageType">
+          <button class="active" data-value="fixed">Fixed</button>
+          <button data-value="tracker">Tracker</button>
+        </div>
+      </div>
+      <div id="fixedOptions">
+        <div class="field">
+          <label>Fixed rate</label>
+          <div class="input-suffix" data-suffix="%"><input type="text" id="fixedRate" value="4.5"></div>
+        </div>
+      </div>
+      <div id="trackerOptions" style="display:none;">
+        <div class="row">
+          <div class="field">
+            <label>Bank of England base rate</label>
+            <div class="input-suffix" data-suffix="%"><input type="text" id="baseRate" value="4.5"></div>
+          </div>
+          <div class="field">
+            <label>Tracker margin above base</label>
+            <div class="input-suffix" data-suffix="%"><input type="text" id="trackerMargin" value="0.75"></div>
+          </div>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="slider-field">
+        <label>Mortgage term <span id="termDisplay">30 years</span></label>
+        <input type="range" id="term" min="15" max="40" value="30" step="1">
+      </div>
+    </div>
+
+    <!-- Affordability -->
+    <div class="card">
+      <h2>Affordability</h2>
+      <p class="section-note">Banks typically average bonuses over 3 years and discount by 20–40% as a safety buffer.</p>
+
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="name1" value="Person 1" style="width:100%;padding:0.6rem 0.75rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;font-family:inherit;">
+      </div>
+      <div class="field">
+        <label>Annual salary</label>
+        <div class="input-prefix"><input type="text" id="salary1" value="125,000" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label>Bonuses (last 3 years)</label></div>
+      <div class="row-3">
+        <div class="field">
+          <div class="input-prefix"><input type="text" id="bonus1y1" placeholder="Year 1" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <div class="input-prefix"><input type="text" id="bonus1y2" placeholder="Year 2" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <div class="input-prefix"><input type="text" id="bonus1y3" placeholder="Year 3" inputmode="numeric"></div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="name2" value="Person 2" style="width:100%;padding:0.6rem 0.75rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;font-family:inherit;">
+      </div>
+      <div class="field">
+        <label>Annual salary</label>
+        <div class="input-prefix"><input type="text" id="salary2" value="80,000" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label>Bonuses (last 3 years)</label></div>
+      <div class="row-3">
+        <div class="field">
+          <div class="input-prefix"><input type="text" id="bonus2y1" value="50,000" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <div class="input-prefix"><input type="text" id="bonus2y2" value="70,000" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <div class="input-prefix"><input type="text" id="bonus2y3" value="80,000" inputmode="numeric"></div>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="slider-field">
+        <label>Bank bonus haircut <span id="haircutDisplay">30%</span></label>
+        <input type="range" id="haircut" min="20" max="40" value="30" step="5">
+      </div>
+      <div class="slider-field">
+        <label>Income multiple <span id="multipleDisplay">4.5x</span></label>
+        <input type="range" id="multiple" min="3.0" max="5.5" value="4.5" step="0.25">
+      </div>
+      <hr class="divider">
+      <p class="section-note">Tax and social security rates to calculate take-home pay.</p>
+      <div class="field">
+        <label>Tax rate mode</label>
+        <div class="toggle-group" id="taxMode">
+          <button class="active" data-value="same">Same rate</button>
+          <button data-value="separate">Separate rates</button>
+        </div>
+      </div>
+      <div id="taxSameRow">
+        <div class="field">
+          <label>Effective tax rate (both)</label>
+          <div class="input-suffix" data-suffix="%"><input type="text" id="taxRate" value="33"></div>
+        </div>
+      </div>
+      <div id="taxSeparateRow" style="display:none;">
+        <div class="row">
+          <div class="field">
+            <label id="taxLabel1">Person 1 — effective tax rate</label>
+            <div class="input-suffix" data-suffix="%"><input type="text" id="taxRate1" value="33"></div>
+          </div>
+          <div class="field">
+            <label id="taxLabel2">Person 2 — effective tax rate</label>
+            <div class="input-suffix" data-suffix="%"><input type="text" id="taxRate2" value="28"></div>
+          </div>
+        </div>
+      </div>
+      <p class="section-note">Social security: 6% on gross up to £6,062/mo cap.</p>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Results -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+    <!-- Monthly Payment -->
+    <div class="card">
+      <h2>Monthly Repayment</h2>
+      <div class="results-grid">
+        <div class="stat mortgage-hero">
+          <div class="label">Mortgage amount</div>
+          <div class="value" id="mortgageAmount">—</div>
+          <div class="sub" id="ltvInline"></div>
+        </div>
+        <div class="stat highlight">
+          <div class="label">Monthly payment (total)</div>
+          <div class="value" id="monthlyPayment">—</div>
+          <div class="sub" id="monthlyPaymentNote"></div>
+        </div>
+        <div class="stat">
+          <div class="label">Per person (50/50)</div>
+          <div class="value" id="monthlyPerPerson">—</div>
+          <div class="sub">Each per month</div>
+        </div>
+        <div class="stat">
+          <div class="label">LTV Ratio</div>
+          <div class="value" id="ltv">—</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <div class="stat" id="netIncomeStat1">
+            <div class="label" id="repayLabel1">Person 1 — % of net</div>
+            <div class="value" id="repaymentPct1">—</div>
+            <div class="sub" id="repaymentPctNote1"></div>
+          </div>
+          <div class="stat" id="netBonusStat1" style="display:none;">
+            <div class="label" id="repayBonusLabel1">Person 1 — inc. bonus</div>
+            <div class="value" id="repaymentBonusPct1">—</div>
+            <div class="sub" id="repaymentBonusNote1"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <div class="stat" id="netIncomeStat2">
+            <div class="label" id="repayLabel2">Person 2 — % of net</div>
+            <div class="value" id="repaymentPct2">—</div>
+            <div class="sub" id="repaymentPctNote2"></div>
+          </div>
+          <div class="stat" id="netBonusStat2" style="display:none;">
+            <div class="label" id="repayBonusLabel2">Person 2 — inc. bonus</div>
+            <div class="value" id="repaymentBonusPct2">—</div>
+            <div class="sub" id="repaymentBonusNote2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deposit Breakdown -->
+    <div class="card">
+      <h2>Deposit Breakdown</h2>
+      <table class="breakdown">
+        <tr><td>Equity from current home</td><td id="equityValue">—</td></tr>
+        <tr><td>Outstanding mortgage</td><td id="outstandingValue">—</td></tr>
+        <tr><td>Net equity</td><td id="netEquityValue">—</td></tr>
+        <tr><td>Cash deposit</td><td id="cashValue">—</td></tr>
+        <tr class="total"><td>Total deposit</td><td id="totalDeposit">—</td></tr>
+      </table>
+    </div>
+
+    <!-- Affordability Result -->
+    <div class="card">
+      <h2>Affordability Check</h2>
+      <div class="results-grid">
+        <div class="stat" id="affordStat">
+          <div class="label">Max borrowing</div>
+          <div class="value" id="maxBorrowing">—</div>
+          <div class="sub" id="maxBorrowingSub"></div>
+        </div>
+        <div class="stat">
+          <div class="label">Adjusted income</div>
+          <div class="value" id="adjustedIncome">—</div>
+          <div class="sub" id="incomeBreakdown"></div>
+        </div>
+      </div>
+      <div class="afford-bar-container">
+        <div class="afford-bar-bg">
+          <div class="afford-bar-fill" id="affordBar" style="width:0%;background:var(--green)"></div>
+        </div>
+        <div class="afford-bar-labels">
+          <span>£0</span>
+          <span id="affordBarMax">—</span>
+        </div>
+      </div>
+      <table class="breakdown">
+        <tr><td>Combined salaries</td><td id="combinedSalaries">—</td></tr>
+        <tr><td>Avg bonus (Person 1)</td><td id="avgBonus1">—</td></tr>
+        <tr><td>Avg bonus (Person 2)</td><td id="avgBonus2">—</td></tr>
+        <tr><td>Bonus after haircut</td><td id="bonusAfterHaircut">—</td></tr>
+        <tr class="total"><td>Income for lending</td><td id="lendingIncome">—</td></tr>
+      </table>
+    </div>
+
+    <!-- Cost Over Time -->
+    <div class="card">
+      <h2>Total Cost</h2>
+      <div class="results-grid">
+        <div class="stat">
+          <div class="label">Total repaid</div>
+          <div class="value" id="totalRepaid">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Total interest</div>
+          <div class="value" id="totalInterest">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ---- Helpers ----
+  function parseMoney(str) {
+    if (!str) return 0;
+    return parseFloat(str.replace(/[^0-9.\-]/g, '')) || 0;
+  }
+
+  function formatMoney(n) {
+    if (isNaN(n) || n === null) return '—';
+    const abs = Math.abs(n);
+    if (abs >= 1000) {
+      return (n < 0 ? '-' : '') + '£' + Math.round(abs).toLocaleString('en-GB');
+    }
+    return (n < 0 ? '-' : '') + '£' + abs.toFixed(2);
+  }
+
+  function formatMoneyShort(n) {
+    if (isNaN(n)) return '—';
+    if (n >= 1_000_000) return '£' + (n / 1_000_000).toFixed(1) + 'm';
+    if (n >= 1_000) return '£' + (n / 1_000).toFixed(0) + 'k';
+    return '£' + n.toFixed(0);
+  }
+
+  function formatCurrency(input) {
+    const raw = input.value.replace(/[^0-9]/g, '');
+    if (!raw) { input.value = ''; return; }
+    const num = parseInt(raw, 10);
+    const pos = input.selectionStart;
+    const prevLen = input.value.length;
+    input.value = num.toLocaleString('en-GB');
+    const diff = input.value.length - prevLen;
+    input.setSelectionRange(pos + diff, pos + diff);
+  }
+
+  // Monthly payment for an annuity
+  function monthlyPayment(principal, annualRate, years) {
+    if (principal <= 0) return 0;
+    if (annualRate === 0) return principal / (years * 12);
+    const r = annualRate / 100 / 12;
+    const n = years * 12;
+    return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  }
+
+  // Remaining balance after k months of payments
+  function remainingBalance(principal, annualRate, totalYears, monthsPaid) {
+    if (principal <= 0) return 0;
+    if (annualRate === 0) return principal - (principal / (totalYears * 12)) * monthsPaid;
+    const r = annualRate / 100 / 12;
+    const n = totalYears * 12;
+    const pmt = principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    return principal * Math.pow(1 + r, monthsPaid) - pmt * (Math.pow(1 + r, monthsPaid) - 1) / r;
+  }
+
+  // ---- Toggle groups ----
+  document.querySelectorAll('.toggle-group').forEach(group => {
+    group.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        calculate();
+      });
+    });
+  });
+
+  // ---- Mortgage type toggle ----
+  function getToggleValue(id) {
+    const active = document.querySelector(`#${id} button.active`);
+    return active ? active.dataset.value : null;
+  }
+
+  function updateMortgageTypeUI() {
+    const type = getToggleValue('mortgageType');
+    document.getElementById('fixedOptions').style.display = type === 'fixed' ? '' : 'none';
+    document.getElementById('trackerOptions').style.display = type === 'tracker' ? '' : 'none';
+  }
+
+  document.getElementById('mortgageType').addEventListener('click', () => {
+    updateMortgageTypeUI();
+  });
+
+  // ---- Tax mode toggle ----
+  function updateTaxModeUI() {
+    const mode = getToggleValue('taxMode');
+    document.getElementById('taxSameRow').style.display = mode === 'same' ? '' : 'none';
+    document.getElementById('taxSeparateRow').style.display = mode === 'separate' ? '' : 'none';
+  }
+
+  document.getElementById('taxMode').addEventListener('click', () => {
+    updateTaxModeUI();
+    calculate();
+  });
+
+  ['taxRate','taxRate1','taxRate2'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calculate);
+  });
+
+  ['name1','name2'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calculate);
+  });
+
+  // ---- Currency formatting on inputs ----
+  const currencyInputs = ['propertyPrice','cashDeposit','salePrice','purchasePrice','outstandingMortgage',
+    'salary1','salary2','bonus1y1','bonus1y2','bonus1y3','bonus2y1','bonus2y2','bonus2y3'];
+  currencyInputs.forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { formatCurrency(el); calculate(); });
+  });
+
+  // ---- Other inputs ----
+  ['fixedRate','baseRate','trackerMargin'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calculate);
+  });
+
+  document.getElementById('term').addEventListener('input', () => {
+    document.getElementById('termDisplay').textContent = document.getElementById('term').value + ' years';
+    calculate();
+  });
+
+  document.getElementById('haircut').addEventListener('input', () => {
+    document.getElementById('haircutDisplay').textContent = document.getElementById('haircut').value + '%';
+    calculate();
+  });
+
+  document.getElementById('multiple').addEventListener('input', () => {
+    document.getElementById('multipleDisplay').textContent = parseFloat(document.getElementById('multiple').value).toFixed(2) + 'x';
+    calculate();
+  });
+
+  // ---- Main calculation ----
+  function calculate() {
+    const propertyPrice = parseMoney(document.getElementById('propertyPrice').value);
+    const cashDeposit = parseMoney(document.getElementById('cashDeposit').value);
+    const salePrice = parseMoney(document.getElementById('salePrice').value);
+    const purchasePrice = parseMoney(document.getElementById('purchasePrice').value);
+    const outstanding = parseMoney(document.getElementById('outstandingMortgage').value);
+
+    const type = getToggleValue('mortgageType');
+    const term = parseInt(document.getElementById('term').value);
+
+    // Deposit
+    const equity = salePrice - purchasePrice;
+    const netEquity = salePrice - outstanding;
+    const totalDep = Math.max(0, netEquity) + cashDeposit;
+    const mortgage = Math.max(0, propertyPrice - totalDep);
+
+    document.getElementById('equityValue').textContent = formatMoney(equity);
+    document.getElementById('outstandingValue').textContent = '-' + formatMoney(outstanding).replace('-','');
+    document.getElementById('netEquityValue').textContent = formatMoney(netEquity);
+    document.getElementById('cashValue').textContent = formatMoney(cashDeposit);
+    document.getElementById('totalDeposit').textContent = formatMoney(totalDep);
+
+    // Mortgage & LTV
+    const ltv = propertyPrice > 0 ? (mortgage / propertyPrice * 100) : 0;
+    document.getElementById('mortgageAmount').textContent = formatMoney(mortgage);
+    document.getElementById('ltv').textContent = ltv.toFixed(1) + '%';
+    document.getElementById('ltvInline').textContent = ltv.toFixed(1) + '% LTV on ' + formatMoney(propertyPrice) + ' property';
+
+    // Monthly payment
+    let rate, payment, totalRepaid, totalInterest;
+
+    if (type === 'fixed') {
+      const fixedRate = parseFloat(document.getElementById('fixedRate').value) || 0;
+
+      payment = monthlyPayment(mortgage, fixedRate, term);
+      totalRepaid = payment * term * 12;
+      totalInterest = totalRepaid - mortgage;
+
+      document.getElementById('monthlyPaymentNote').textContent =
+        `At ${fixedRate}% fixed rate`;
+
+      rate = fixedRate;
+    } else {
+      const baseRate = parseFloat(document.getElementById('baseRate').value) || 0;
+      const margin = parseFloat(document.getElementById('trackerMargin').value) || 0;
+      rate = baseRate + margin;
+
+      payment = monthlyPayment(mortgage, rate, term);
+      totalRepaid = payment * term * 12;
+      totalInterest = totalRepaid - mortgage;
+
+      document.getElementById('monthlyPaymentNote').textContent =
+        `At tracker rate ${rate.toFixed(2)}% (base ${baseRate}% + ${margin}%)`;
+    }
+
+    document.getElementById('monthlyPayment').textContent = formatMoney(payment);
+    document.getElementById('monthlyPerPerson').textContent = formatMoney(payment / 2);
+    document.getElementById('totalRepaid').textContent = formatMoney(totalRepaid);
+    document.getElementById('totalInterest').textContent = formatMoney(totalInterest);
+
+    // Net income & per-person repayment %
+    const salary1 = parseMoney(document.getElementById('salary1').value);
+    const salary2 = parseMoney(document.getElementById('salary2').value);
+    const name1 = document.getElementById('name1').value || 'Person 1';
+    const name2 = document.getElementById('name2').value || 'Person 2';
+    document.getElementById('taxLabel1').textContent = name1 + ' — effective tax rate';
+    document.getElementById('taxLabel2').textContent = name2 + ' — effective tax rate';
+    const taxMode = getToggleValue('taxMode');
+    const halfPayment = payment / 2;
+    const SS_RATE = 0.06, SS_CAP = 6062;
+    const ss1Mo = Math.min(salary1 / 12, SS_CAP) * SS_RATE;
+    const ss2Mo = Math.min(salary2 / 12, SS_CAP) * SS_RATE;
+    let net1Monthly, net2Monthly;
+    if (taxMode === 'separate') {
+      const tr1 = (parseFloat(document.getElementById('taxRate1').value) || 0) / 100;
+      const tr2 = (parseFloat(document.getElementById('taxRate2').value) || 0) / 100;
+      net1Monthly = (salary1 * (1 - tr1)) / 12 - ss1Mo;
+      net2Monthly = (salary2 * (1 - tr2)) / 12 - ss2Mo;
+    } else {
+      const tr = (parseFloat(document.getElementById('taxRate').value) || 0) / 100;
+      net1Monthly = (salary1 * (1 - tr)) / 12 - ss1Mo;
+      net2Monthly = (salary2 * (1 - tr)) / 12 - ss2Mo;
+    }
+
+    const b1 = [parseMoney(document.getElementById('bonus1y1').value),
+                parseMoney(document.getElementById('bonus1y2').value),
+                parseMoney(document.getElementById('bonus1y3').value)];
+    const b2 = [parseMoney(document.getElementById('bonus2y1').value),
+                parseMoney(document.getElementById('bonus2y2').value),
+                parseMoney(document.getElementById('bonus2y3').value)];
+
+    const avgBonus1 = (b1[0] + b1[1] + b1[2]) / 3;
+    const avgBonus2 = (b2[0] + b2[1] + b2[2]) / 3;
+    const haircutPct = parseInt(document.getElementById('haircut').value) / 100;
+
+    function applyRepayPctStat(statId, labelId, pctId, noteId, label, share, netMo) {
+      const pct = netMo > 0 ? (share / netMo) * 100 : 0;
+      document.getElementById(labelId).textContent = label;
+      document.getElementById(pctId).textContent = pct.toFixed(1) + '%';
+      document.getElementById(noteId).textContent =
+        formatMoney(share) + ' of ' + formatMoney(netMo) + '/mo net';
+      const el = document.getElementById(statId);
+      el.className = 'stat';
+      if (pct <= 30) el.classList.add('pass');
+      else if (pct <= 40) el.classList.add('warn');
+      else el.classList.add('fail');
+    }
+    applyRepayPctStat('netIncomeStat1', 'repayLabel1', 'repaymentPct1', 'repaymentPctNote1', name1 + ' — % of net (salary)', halfPayment, net1Monthly);
+    applyRepayPctStat('netIncomeStat2', 'repayLabel2', 'repaymentPct2', 'repaymentPctNote2', name2 + ' — % of net (salary)', halfPayment, net2Monthly);
+
+    // Bonus-inclusive net income stats (only shown if person has bonuses)
+    const hasBonus1 = b1.some(v => v > 0);
+    const hasBonus2 = b2.some(v => v > 0);
+    const discBonus1Mo = (avgBonus1 * (1 - haircutPct)) / 12;
+    const discBonus2Mo = (avgBonus2 * (1 - haircutPct)) / 12;
+
+    const bonusStat1 = document.getElementById('netBonusStat1');
+    const bonusStat2 = document.getElementById('netBonusStat2');
+
+    if (hasBonus1) {
+      // Apply tax + SS to the discounted bonus portion
+      let bonusNet1Mo;
+      if (taxMode === 'separate') {
+        const tr1 = (parseFloat(document.getElementById('taxRate1').value) || 0) / 100;
+        bonusNet1Mo = discBonus1Mo * (1 - tr1);
+      } else {
+        const tr = (parseFloat(document.getElementById('taxRate').value) || 0) / 100;
+        bonusNet1Mo = discBonus1Mo * (1 - tr);
+      }
+      const netIncBonus1 = net1Monthly + bonusNet1Mo;
+      bonusStat1.style.display = '';
+      applyRepayPctStat('netBonusStat1', 'repayBonusLabel1', 'repaymentBonusPct1', 'repaymentBonusNote1', name1 + ' — inc. bonus', halfPayment, netIncBonus1);
+    } else {
+      bonusStat1.style.display = 'none';
+    }
+
+    if (hasBonus2) {
+      let bonusNet2Mo;
+      if (taxMode === 'separate') {
+        const tr2 = (parseFloat(document.getElementById('taxRate2').value) || 0) / 100;
+        bonusNet2Mo = discBonus2Mo * (1 - tr2);
+      } else {
+        const tr = (parseFloat(document.getElementById('taxRate').value) || 0) / 100;
+        bonusNet2Mo = discBonus2Mo * (1 - tr);
+      }
+      const netIncBonus2 = net2Monthly + bonusNet2Mo;
+      bonusStat2.style.display = '';
+      applyRepayPctStat('netBonusStat2', 'repayBonusLabel2', 'repaymentBonusPct2', 'repaymentBonusNote2', name2 + ' — inc. bonus', halfPayment, netIncBonus2);
+    } else {
+      bonusStat2.style.display = 'none';
+    }
+    const multiple = parseFloat(document.getElementById('multiple').value);
+
+    const totalBonus = avgBonus1 + avgBonus2;
+    const bonusAfterHaircut = totalBonus * (1 - haircutPct);
+    const combinedSalary = salary1 + salary2;
+    const adjustedIncome = combinedSalary + bonusAfterHaircut;
+    const maxBorrowing = adjustedIncome * multiple;
+
+    document.getElementById('combinedSalaries').textContent = formatMoney(combinedSalary);
+    document.getElementById('avgBonus1').textContent = formatMoney(avgBonus1);
+    document.getElementById('avgBonus2').textContent = formatMoney(avgBonus2);
+    document.getElementById('bonusAfterHaircut').textContent = formatMoney(bonusAfterHaircut);
+    document.getElementById('lendingIncome').textContent = formatMoney(adjustedIncome);
+    document.getElementById('adjustedIncome').textContent = formatMoney(adjustedIncome);
+    document.getElementById('incomeBreakdown').textContent = `Salaries + discounted bonus`;
+
+    document.getElementById('maxBorrowing').textContent = formatMoney(maxBorrowing);
+    document.getElementById('maxBorrowingSub').textContent = `At ${multiple}x income`;
+
+    // Affordability status
+    const affordStat = document.getElementById('affordStat');
+    affordStat.className = 'stat';
+    const ratio = maxBorrowing > 0 ? mortgage / maxBorrowing : 999;
+    if (mortgage <= maxBorrowing * 0.9) {
+      affordStat.classList.add('pass');
+    } else if (mortgage <= maxBorrowing) {
+      affordStat.classList.add('warn');
+    } else {
+      affordStat.classList.add('fail');
+    }
+
+    // Afford bar
+    const barPct = maxBorrowing > 0 ? Math.min(100, (mortgage / maxBorrowing) * 100) : 0;
+    const bar = document.getElementById('affordBar');
+    bar.style.width = barPct + '%';
+    bar.style.background = mortgage <= maxBorrowing * 0.9 ? 'var(--green)' :
+                            mortgage <= maxBorrowing ? 'var(--amber)' : 'var(--red)';
+    document.getElementById('affordBarMax').textContent = formatMoneyShort(maxBorrowing);
+  }
+
+  // ---- Scenarios ----
+  const STORAGE_KEY = 'mortgage_calc_scenarios';
+  let activeScenario = null;
+
+  const allInputIds = ['propertyPrice','cashDeposit','salePrice','purchasePrice','outstandingMortgage',
+    'fixedRate','baseRate','trackerMargin',
+    'salary1','salary2','bonus1y1','bonus1y2','bonus1y3','bonus2y1','bonus2y2','bonus2y3',
+    'taxRate','taxRate1','taxRate2','name1','name2'];
+  const sliderIds = ['term','haircut','multiple'];
+  const toggleIds = ['mortgageType','taxMode'];
+
+  function getScenarios() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch { return {}; }
+  }
+
+  function saveScenarios(scenarios) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios));
+  }
+
+  function captureState() {
+    const state = {};
+    allInputIds.forEach(id => { state[id] = document.getElementById(id).value; });
+    sliderIds.forEach(id => { state[id] = document.getElementById(id).value; });
+    toggleIds.forEach(id => { state[id] = getToggleValue(id); });
+    return state;
+  }
+
+  function loadState(state) {
+    allInputIds.forEach(id => {
+      if (state[id] !== undefined) document.getElementById(id).value = state[id];
+    });
+    sliderIds.forEach(id => {
+      if (state[id] !== undefined) document.getElementById(id).value = state[id];
+    });
+    toggleIds.forEach(id => {
+      if (state[id] !== undefined) {
+        const group = document.getElementById(id);
+        group.querySelectorAll('button').forEach(b => {
+          b.classList.toggle('active', b.dataset.value === state[id]);
+        });
+      }
+    });
+    // Update slider displays
+    document.getElementById('termDisplay').textContent = document.getElementById('term').value + ' years';
+    document.getElementById('haircutDisplay').textContent = document.getElementById('haircut').value + '%';
+    document.getElementById('multipleDisplay').textContent = parseFloat(document.getElementById('multiple').value).toFixed(2) + 'x';
+    updateMortgageTypeUI();
+    updateTaxModeUI();
+    calculate();
+  }
+
+  function renderScenarios() {
+    const pills = document.getElementById('scenarioPills');
+    const scenarios = getScenarios();
+    const names = Object.keys(scenarios);
+
+    pills.innerHTML = '';
+
+    const updateBtn = document.getElementById('updateScenarioBtn');
+    updateBtn.style.display = activeScenario && names.includes(activeScenario) ? '' : 'none';
+
+    if (names.length === 0) {
+      pills.innerHTML = '<span class="scenario-empty" id="scenarioEmpty">No saved scenarios</span>';
+      return;
+    }
+
+    names.forEach(name => {
+      const entry = scenarios[name];
+      // Support old format (plain state) and new format ({ state, description })
+      const state = entry.state || entry;
+      const desc = entry.description || '';
+
+      const pill = document.createElement('div');
+      pill.className = 'scenario-pill' + (activeScenario === name ? ' active' : '');
+
+      const label = document.createElement('span');
+      label.textContent = name;
+      label.addEventListener('click', () => {
+        activeScenario = name;
+        loadState(state);
+        renderScenarios();
+      });
+
+      if (desc) {
+        const tooltip = document.createElement('span');
+        tooltip.className = 'pill-desc';
+        tooltip.textContent = desc;
+        pill.appendChild(tooltip);
+      }
+
+      const del = document.createElement('button');
+      del.className = 'pill-delete';
+      del.textContent = '\u00d7';
+      del.title = 'Delete scenario';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const s = getScenarios();
+        delete s[name];
+        saveScenarios(s);
+        if (activeScenario === name) activeScenario = null;
+        renderScenarios();
+      });
+
+      pill.appendChild(label);
+      pill.appendChild(del);
+      pills.appendChild(pill);
+    });
+  }
+
+  document.getElementById('saveScenarioBtn').addEventListener('click', () => {
+    const name = prompt('Name this scenario:');
+    if (!name || !name.trim()) return;
+    const desc = prompt('Description (optional):') || '';
+    const scenarios = getScenarios();
+    scenarios[name.trim()] = { state: captureState(), description: desc.trim() };
+    saveScenarios(scenarios);
+    activeScenario = name.trim();
+    renderScenarios();
+  });
+
+  document.getElementById('updateScenarioBtn').addEventListener('click', () => {
+    if (!activeScenario) return;
+    const scenarios = getScenarios();
+    if (!scenarios[activeScenario]) return;
+    const existingDesc = (scenarios[activeScenario].description || '');
+    const desc = prompt('Update description (leave blank to keep current):', existingDesc);
+    if (desc === null) return; // cancelled
+    scenarios[activeScenario] = {
+      state: captureState(),
+      description: desc.trim() || existingDesc
+    };
+    saveScenarios(scenarios);
+    renderScenarios();
+  });
+
+  // ---- Export CSV ----
+  function computeResults(state) {
+    const p = k => parseFloat((state[k] || '0').replace(/[^0-9.\-]/g, '')) || 0;
+    const propertyPrice = p('propertyPrice');
+    const cashDeposit = p('cashDeposit');
+    const salePrice = p('salePrice');
+    const outstanding = p('outstandingMortgage');
+    const netEquity = salePrice - outstanding;
+    const totalDep = Math.max(0, netEquity) + cashDeposit;
+    const mortgage = Math.max(0, propertyPrice - totalDep);
+    const ltv = propertyPrice > 0 ? (mortgage / propertyPrice * 100) : 0;
+    const term = parseInt(state.term) || 30;
+    const type = state.mortgageType || 'fixed';
+
+    let payment, totalRepaid, totalInterest, rateLabel;
+    if (type === 'fixed') {
+      const fixedRate = parseFloat(state.fixedRate) || 0;
+      payment = monthlyPayment(mortgage, fixedRate, term);
+      totalRepaid = payment * term * 12;
+      totalInterest = totalRepaid - mortgage;
+      rateLabel = `Fixed ${fixedRate}%`;
+    } else {
+      const base = parseFloat(state.baseRate) || 0;
+      const margin = parseFloat(state.trackerMargin) || 0;
+      const rate = base + margin;
+      payment = monthlyPayment(mortgage, rate, term);
+      totalRepaid = payment * term * 12;
+      totalInterest = totalRepaid - mortgage;
+      rateLabel = `Tracker ${rate.toFixed(2)}% (base ${base}% + ${margin}%)`;
+    }
+
+    const salary1 = p('salary1'), salary2 = p('salary2');
+    const b1 = [p('bonus1y1'), p('bonus1y2'), p('bonus1y3')];
+    const b2 = [p('bonus2y1'), p('bonus2y2'), p('bonus2y3')];
+    const avgB1 = (b1[0]+b1[1]+b1[2])/3, avgB2 = (b2[0]+b2[1]+b2[2])/3;
+    const haircut = (parseInt(state.haircut) || 30) / 100;
+    const multiple = parseFloat(state.multiple) || 4.5;
+    const bonusAfter = (avgB1 + avgB2) * (1 - haircut);
+    const adjustedIncome = salary1 + salary2 + bonusAfter;
+    const maxBorrowing = adjustedIncome * multiple;
+
+    // Net income per person
+    const taxMode = state.taxMode || 'same';
+    const SS_RATE = 0.06, SS_CAP = 6062;
+    const ss1Mo = Math.min(salary1 / 12, SS_CAP) * SS_RATE;
+    const ss2Mo = Math.min(salary2 / 12, SS_CAP) * SS_RATE;
+    let net1Monthly, net2Monthly;
+    if (taxMode === 'separate') {
+      const tr1 = (parseFloat(state.taxRate1) || 0) / 100;
+      const tr2 = (parseFloat(state.taxRate2) || 0) / 100;
+      net1Monthly = (salary1 * (1 - tr1)) / 12 - ss1Mo;
+      net2Monthly = (salary2 * (1 - tr2)) / 12 - ss2Mo;
+    } else {
+      const tr = (parseFloat(state.taxRate) || 0) / 100;
+      net1Monthly = (salary1 * (1 - tr)) / 12 - ss1Mo;
+      net2Monthly = (salary2 * (1 - tr)) / 12 - ss2Mo;
+    }
+    const halfPmt = payment / 2;
+    const repayPct1 = net1Monthly > 0 ? (halfPmt / net1Monthly) * 100 : 0;
+    const repayPct2 = net2Monthly > 0 ? (halfPmt / net2Monthly) * 100 : 0;
+    const name1 = state.name1 || 'Person 1';
+    const name2 = state.name2 || 'Person 2';
+
+    // Bonus-inclusive net income
+    const hasBonus1 = b1.some(v => v > 0);
+    const hasBonus2 = b2.some(v => v > 0);
+    const discB1Mo = (avgB1 * (1 - haircut)) / 12;
+    const discB2Mo = (avgB2 * (1 - haircut)) / 12;
+    let netIncBonus1 = net1Monthly, netIncBonus2 = net2Monthly;
+    if (taxMode === 'separate') {
+      const tr1 = (parseFloat(state.taxRate1) || 0) / 100;
+      const tr2 = (parseFloat(state.taxRate2) || 0) / 100;
+      netIncBonus1 = net1Monthly + discB1Mo * (1 - tr1);
+      netIncBonus2 = net2Monthly + discB2Mo * (1 - tr2);
+    } else {
+      const tr = (parseFloat(state.taxRate) || 0) / 100;
+      netIncBonus1 = net1Monthly + discB1Mo * (1 - tr);
+      netIncBonus2 = net2Monthly + discB2Mo * (1 - tr);
+    }
+    const repayBonusPct1 = netIncBonus1 > 0 ? (halfPmt / netIncBonus1) * 100 : 0;
+    const repayBonusPct2 = netIncBonus2 > 0 ? (halfPmt / netIncBonus2) * 100 : 0;
+
+    return { propertyPrice, cashDeposit, salePrice, outstanding, netEquity, totalDep, mortgage, ltv, term,
+      rateLabel, payment, totalRepaid, totalInterest,
+      salary1, salary2, avgB1, avgB2, haircut: haircut*100, multiple, bonusAfter, adjustedIncome, maxBorrowing,
+      affordable: mortgage <= maxBorrowing ? 'Yes' : 'No',
+      name1, name2, net1Monthly, net2Monthly, repayPct1, repayPct2,
+      hasBonus1, hasBonus2, netIncBonus1, netIncBonus2, repayBonusPct1, repayBonusPct2 };
+  }
+
+  document.getElementById('exportCsvBtn').addEventListener('click', () => {
+    const scenarios = getScenarios();
+    const names = Object.keys(scenarios);
+
+    // If no scenarios saved, export the current state
+    const entries = names.length > 0
+      ? names.map(n => {
+          const entry = scenarios[n];
+          const state = entry.state || entry;
+          const desc = entry.description || '';
+          return { name: n, description: desc, state };
+        })
+      : [{ name: 'Current', description: '', state: captureState() }];
+
+    const headers = [
+      'Scenario','Description',
+      'Property Price','Cash Deposit','Sale Price','Net Equity','Total Deposit',
+      'Mortgage Amount','LTV %','Term (years)','Rate',
+      'Monthly Payment','Per Person (50/50)','Total Repaid','Total Interest',
+      'Salary 1','Salary 2','Avg Bonus 1','Avg Bonus 2',
+      'Bonus Haircut %','Income Multiple','Bonus After Haircut','Adjusted Income',
+      'Max Borrowing','Affordable',
+      'Person 1 Name','Person 1 Net Monthly','Person 1 Repay % Net',
+      'Person 2 Name','Person 2 Net Monthly','Person 2 Repay % Net'
+    ];
+
+    const csvEsc = v => `"${String(v).replace(/"/g, '""')}"`;
+    const money = n => Math.round(n);
+
+    const rows = entries.map(e => {
+      const r = computeResults(e.state);
+      return [
+        e.name, e.description,
+        money(r.propertyPrice), money(r.cashDeposit), money(r.salePrice), money(r.netEquity), money(r.totalDep),
+        money(r.mortgage), r.ltv.toFixed(1), r.term, r.rateLabel,
+        money(r.payment), money(r.payment/2), money(r.totalRepaid), money(r.totalInterest),
+        money(r.salary1), money(r.salary2), money(r.avgB1), money(r.avgB2),
+        r.haircut, r.multiple, money(r.bonusAfter), money(r.adjustedIncome),
+        money(r.maxBorrowing), r.affordable,
+        r.name1, money(r.net1Monthly), r.repayPct1.toFixed(1),
+        r.name2, money(r.net2Monthly), r.repayPct2.toFixed(1)
+      ].map(csvEsc).join(',');
+    });
+
+    const csv = [headers.map(csvEsc).join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mortgage_scenarios.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ---- Export PDF ----
+  document.getElementById('exportPdfBtn').addEventListener('click', () => {
+    const state = captureState();
+    const r = computeResults(state);
+    const m = n => formatMoney(n);
+
+    let scenarioName = '';
+    let scenarioDesc = '';
+    if (activeScenario) {
+      const scenarios = getScenarios();
+      const entry = scenarios[activeScenario];
+      if (entry) {
+        scenarioName = activeScenario;
+        scenarioDesc = entry.description || '';
+      }
+    }
+
+    const affordColor = r.mortgage <= r.maxBorrowing * 0.9 ? '#22c55e' :
+                        r.mortgage <= r.maxBorrowing ? '#eab308' : '#ef4444';
+    const pct1Color = r.repayPct1 <= 30 ? '#22c55e' : r.repayPct1 <= 40 ? '#eab308' : '#ef4444';
+    const pct2Color = r.repayPct2 <= 30 ? '#22c55e' : r.repayPct2 <= 40 ? '#eab308' : '#ef4444';
+    const bPct1Color = r.repayBonusPct1 <= 30 ? '#22c55e' : r.repayBonusPct1 <= 40 ? '#eab308' : '#ef4444';
+    const bPct2Color = r.repayBonusPct2 <= 30 ? '#22c55e' : r.repayBonusPct2 <= 40 ? '#eab308' : '#ef4444';
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mortgage Summary</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #1a1a2e; font-size: 11px; line-height: 1.45; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+  .subtitle { color: #666; font-size: 11px; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .section { margin-bottom: 14px; }
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 6px; padding-bottom: 3px; border-bottom: 2px solid #e5e7eb; }
+  .hero { background: #f0f2ff; border: 1px solid #c7cdff; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+  .hero .label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .hero .val { font-size: 24px; font-weight: 800; color: #1a1a2e; }
+  .hero .sub { font-size: 10px; color: #666; }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .stat-box { background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; }
+  .stat-box .label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .stat-box .val { font-size: 16px; font-weight: 700; }
+  .stat-box .sub { font-size: 9px; color: #888; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  table td { padding: 3px 0; }
+  table td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  table tr { border-bottom: 1px solid #f0f0f0; }
+  table tr:last-child { border-bottom: none; }
+  table tr.total td { border-top: 2px solid #e5e7eb; font-weight: 700; padding-top: 5px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .footer { margin-top: 10px; text-align: center; color: #aaa; font-size: 9px; }
+</style></head><body>
+<h1>Mortgage Summary${scenarioName ? ' — ' + scenarioName : ''}</h1>
+${scenarioDesc ? '<div style="color:#444;font-size:12px;margin-bottom:2px;">' + scenarioDesc + '</div>' : ''}
+<div class="subtitle">Generated ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+
+<div class="hero">
+  <div class="label">Mortgage Amount</div>
+  <div class="val">${m(r.mortgage)}</div>
+  <div class="sub">${r.ltv.toFixed(1)}% LTV on ${m(r.propertyPrice)} property &nbsp;|&nbsp; ${r.rateLabel} &nbsp;|&nbsp; ${r.term} year term</div>
+</div>
+
+<div class="grid">
+  <div>
+    <div class="section">
+      <div class="section-title">Monthly Repayment</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="label">Total monthly</div>
+          <div class="val">${m(r.payment)}</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Per person (50/50)</div>
+          <div class="val">${m(r.payment / 2)}</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="stat-box">
+            <div class="label">${r.name1} — salary only</div>
+            <div class="val" style="color:${pct1Color}">${r.repayPct1.toFixed(1)}%</div>
+            <div class="sub">${m(r.payment / 2)} of ${m(r.net1Monthly)}/mo</div>
+          </div>
+          ${r.hasBonus1 ? `<div class="stat-box">
+            <div class="label">${r.name1} — inc. bonus</div>
+            <div class="val" style="color:${bPct1Color}">${r.repayBonusPct1.toFixed(1)}%</div>
+            <div class="sub">${m(r.payment / 2)} of ${m(r.netIncBonus1)}/mo</div>
+          </div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="stat-box">
+            <div class="label">${r.name2} — salary only</div>
+            <div class="val" style="color:${pct2Color}">${r.repayPct2.toFixed(1)}%</div>
+            <div class="sub">${m(r.payment / 2)} of ${m(r.net2Monthly)}/mo</div>
+          </div>
+          ${r.hasBonus2 ? `<div class="stat-box">
+            <div class="label">${r.name2} — inc. bonus</div>
+            <div class="val" style="color:${bPct2Color}">${r.repayBonusPct2.toFixed(1)}%</div>
+            <div class="sub">${m(r.payment / 2)} of ${m(r.netIncBonus2)}/mo</div>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Deposit Breakdown</div>
+      <table>
+        <tr><td>Sale price</td><td>${m(r.salePrice)}</td></tr>
+        <tr><td>Outstanding mortgage</td><td>-${m(r.outstanding)}</td></tr>
+        <tr><td>Net equity</td><td>${m(r.netEquity)}</td></tr>
+        <tr><td>Cash deposit</td><td>${m(r.cashDeposit)}</td></tr>
+        <tr class="total"><td>Total deposit</td><td>${m(r.totalDep)}</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Total Cost</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="label">Total repaid</div>
+          <div class="val">${m(r.totalRepaid)}</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Total interest</div>
+          <div class="val">${m(r.totalInterest)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section">
+      <div class="section-title">Affordability</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="label">Max borrowing</div>
+          <div class="val" style="color:${affordColor}">${m(r.maxBorrowing)}</div>
+          <div class="sub">At ${r.multiple}x income</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Adjusted income</div>
+          <div class="val">${m(r.adjustedIncome)}</div>
+          <div class="sub">Salaries + discounted bonus</div>
+        </div>
+      </div>
+      <table>
+        <tr><td>Combined salaries</td><td>${m(r.salary1 + r.salary2)}</td></tr>
+        <tr><td>Avg bonus (${r.name1})</td><td>${m(r.avgB1)}</td></tr>
+        <tr><td>Avg bonus (${r.name2})</td><td>${m(r.avgB2)}</td></tr>
+        <tr><td>Bonus after ${r.haircut}% haircut</td><td>${m(r.bonusAfter)}</td></tr>
+        <tr class="total"><td>Income for lending</td><td>${m(r.adjustedIncome)}</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Income Details</div>
+      <table>
+        <tr><td>${r.name1} — salary</td><td>${m(r.salary1)}</td></tr>
+        <tr><td>${r.name1} — net monthly</td><td>${m(r.net1Monthly)}</td></tr>
+        <tr><td>${r.name2} — salary</td><td>${m(r.salary2)}</td></tr>
+        <tr><td>${r.name2} — net monthly</td><td>${m(r.net2Monthly)}</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Property</div>
+      <table>
+        <tr><td>New property price</td><td>${m(r.propertyPrice)}</td></tr>
+        <tr><td>Current home sale price</td><td>${m(r.salePrice)}</td></tr>
+        <tr><td>Outstanding mortgage</td><td>${m(r.outstanding)}</td></tr>
+        <tr><td>LTV</td><td>${r.ltv.toFixed(1)}%</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Mortgage Calculator &mdash; generated ${new Date().toLocaleDateString('en-GB')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => { w.print(); }, 300);
+  });
+
+  // ---- Init ----
+  renderScenarios();
+  updateMortgageTypeUI();
+  updateTaxModeUI();
+  calculate();
+</script>
+
+</body>
+</html>
