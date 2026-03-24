@@ -524,6 +524,30 @@
     .scenario-pill:hover .pill-desc {
       display: block;
     }
+
+    .scenarios-actions {
+      display: contents;
+    }
+
+    @media (max-width: 860px) {
+      .scenarios-bar { padding: 0 1rem 0.5rem; }
+      .scenarios-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.75rem;
+      }
+      .scenarios-inner > label { margin-bottom: -0.25rem; }
+      .scenario-pills { flex: unset; }
+      .scenarios-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        border-top: 1px solid var(--border);
+        padding-top: 0.5rem;
+      }
+      .scenario-save-btn { flex: 1 1 auto; justify-content: center; font-size: 0.75rem; }
+    }
   </style>
 </head>
 <body>
@@ -543,11 +567,13 @@
     <div class="scenario-pills" id="scenarioPills">
       <span class="scenario-empty" id="scenarioEmpty">No saved scenarios</span>
     </div>
-    <button class="scenario-save-btn" id="saveScenarioBtn">+ Save current</button>
-    <button class="scenario-save-btn" id="updateScenarioBtn" style="display:none;background:var(--amber-dim);border-color:rgba(251,191,36,0.3);color:var(--amber);">Update scenario</button>
-    <button class="scenario-save-btn" id="exportCsvBtn" style="background:var(--green-dim);border-color:rgba(52,211,153,0.3);color:var(--green);">Export CSV</button>
-    <button class="scenario-save-btn" id="exportPdfBtn" style="background:var(--accent-dim);border-color:rgba(108,124,255,0.3);color:var(--accent);">Export PDF</button>
-    <button class="scenario-save-btn" id="shareLinkBtn" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.3);color:#a855f7;">Share link</button>
+    <div class="scenarios-actions">
+      <button class="scenario-save-btn" id="saveScenarioBtn">+ Save current</button>
+      <button class="scenario-save-btn" id="updateScenarioBtn" style="display:none;background:var(--amber-dim);border-color:rgba(251,191,36,0.3);color:var(--amber);">Update scenario</button>
+      <button class="scenario-save-btn" id="exportCsvBtn" style="background:var(--green-dim);border-color:rgba(52,211,153,0.3);color:var(--green);">Export CSV</button>
+      <button class="scenario-save-btn" id="exportPdfBtn" style="background:var(--accent-dim);border-color:rgba(108,124,255,0.3);color:var(--accent);">Export PDF</button>
+      <button class="scenario-save-btn" id="shareLinkBtn" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.3);color:#a855f7;">Share link</button>
+    </div>
   </div>
 </div>
 
