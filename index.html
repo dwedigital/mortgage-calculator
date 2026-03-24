@@ -1283,12 +1283,19 @@
     const scenarios = getScenarios();
     if (!scenarios[activeScenario]) return;
     const existingDesc = (scenarios[activeScenario].description || '');
-    const desc = prompt('Update description (leave blank to keep current):', existingDesc);
+    const newName = prompt('Scenario name:', activeScenario);
+    if (newName === null) return; // cancelled
+    const name = newName.trim() || activeScenario;
+    const desc = prompt('Description (leave blank to keep current):', existingDesc);
     if (desc === null) return; // cancelled
-    scenarios[activeScenario] = {
+    if (name !== activeScenario) {
+      delete scenarios[activeScenario];
+    }
+    scenarios[name] = {
       state: captureState(),
       description: desc.trim() || existingDesc
     };
+    activeScenario = name;
     saveScenarios(scenarios);
     renderScenarios();
   });
